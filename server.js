@@ -187,34 +187,26 @@ app.get('/api/bookings', (req, res) => {
  * DELETE /api/bookings/:id
  * Cancelar reserva
  */
-app.delete('/api/bookings/:id', async (req, res) => {
+app.delete('/api/bookings/:id', (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    const bookingId = parseInt(req.params.id);
-
-    console.log('🗑️ Cancelando reserva ID:', bookingId);
+    const bookingId = req.params.id;
 
     if (!token) {
       return res.status(401).json({ error: 'Debes estar autenticado' });
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('👤 Usuario ID:', decoded.id);
-
-    const success = await db.cancelBooking(bookingId, decoded.id);
-
-    console.log('✅ Resultado cancelación:', success);
+    const success = db.cancelBooking(bookingId, decoded.id);
 
     if (!success) {
-      return res.status(404).json({ error: 'Reserva no encontrada o no te pertenece' });
+      return res.status(404).json({ error: 'Reserva no encontrada' });
     }
 
-    res.json({ success: true, message: 'Reserva cancelada' });
+    res.json({ success: true });
   } catch (error) {
-    console.error('❌ Error al cancelar:', error);
     res.status(500).json({ error: error.message });
   }
-});
 });
 
 // ============ DATOS ============
