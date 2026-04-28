@@ -879,6 +879,9 @@
         }
 
         function proceedToBooking() {
+    //  1. PRUEBA: Ver qué hay en selectedService
+    console.log('selectedService es:', selectedService);
+    
     if (!currentUser) {
         alert('Debes ingresar para reservar');
         openAuthModal('login');
@@ -886,7 +889,9 @@
     }
 
     if (!selectedService) {
-        alert('Por favor selecciona un servicio');
+        //  2. PRUEBA: Mostrar TODOS los servicios disponibles
+        console.log('Servicios disponibles:', selectedBusiness?.services);
+        alert('Por favor haz clic en un servicio para seleccionarlo');
         return;
     }
 
