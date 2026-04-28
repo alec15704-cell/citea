@@ -1,207 +1,104 @@
-/**
- * Citea - Database Manager
- * Gestiona SQLite para usuarios y reservas
- */
-
-const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
-const path = require('path');
 
 class Database {
   constructor() {
-    this.db = new sqlite3.Database('citea.db', (err) => {
-      if (err) {
-        console.error('Error al abrir base de datos:', err);
-      } else {
-        console.log('âœ… Base de datos conectada');
-      }
-    });
+    this.users = [];
+    this.bookings = [];
+    this.nextUserId = 1;
+    this.nextBookingId = 1;
   }
 
-  /**
-   * Inicializar tablas
-   */
   init() {
-    // Tabla de usuarios
-    this.db.run(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        phone TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Tabla de reservas
-    this.db.run(`
-      CREATE TABLE IF NOT EXISTS bookings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        business_id TEXT NOT NULL,
-        service_id TEXT NOT NULL,
-        service_name TEXT NOT NULL,
-        service_price REAL NOT NULL,
-        date TEXT NOT NULL,
-        time TEXT NOT NULL,
-        status TEXT DEFAULT 'confirmada',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-      )
-    `);
-
-    console.log('âœ… Tablas inicializadas');
+    console.log('✅ Base de datos lista');
   }
 
-  /**
-   * Hash de contraseÃ±a
-   */
   hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
   }
 
-  /**
-   * Registrar usuario
-   */
   registerUser(name, email, password, phone = '') {
-    return new Promise((resolve, reject) => {
-      const hashedPassword = this.hashPassword(password);
-
-      this.db.run(
-        'INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)',
-        [name, email, hashedPassword, phone],
-        function(err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve({
-              id: this.lastID,
-              name,
-              email,
-              phone
-            });
-          }
-        }
-      );
-    }).catch(() => null);
+    // Verificar si ya existe
+    if (this.users.find(u => u.email === email)) {
+      return null;
+    }
+    
+    const user = {
+      id: this.nextUserId++,
+      name,
+      email,
+      password: this.hashPassword(password),
+      phone,
+      created_at: new Date().toISOString()
+    };
+    
+    this.users.push(user);
+    
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone
+    };
   }
 
-  /**
-   * Login de usuario
-   */
   loginUser(email, password) {
-    return new Promise((resolve, reject) => {
-      const hashedPassword = this.hashPassword(password);
-
-      this.db.get(
-        'SELECT * FROM users WHERE email = ? AND password = ?',
-        [email, hashedPassword],
-        (err, row) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(row || null);
-          }
-        }
-      );
-    }).catch(() => null);
+    const hashedPassword = this.hashPassword(password);
+    const user = this.users.find(u => u.email === email && u.password === hashedPassword);
+    
+    if (!user) return null;
+    
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone
+    };
   }
 
-  /**
-   * Obtener usuario por ID
-   */
   getUserById(id) {
-    return new Promise((resolve, reject) => {
-      this.db.get(
-        'SELECT id, name, email, phone FROM users WHERE id = ?',
-        [id],
-        (err, row) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(row);
-          }
-        }
-      );
-    }).catch(() => null);
+    const user = this.users.find(u => u.id === id);
+    if (!user) return null;
+    
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone
+    };
   }
 
-  /**
-   * Crear reserva
-   */
   createBooking(userId, businessId, serviceId, serviceName, servicePrice, date, time) {
-    return new Promise((resolve, reject) => {
-      this.db.run(
-        `INSERT INTO bookings 
-         (user_id, business_id, service_id, service_name, service_price, date, time) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [userId, businessId, serviceId, serviceName, servicePrice, date, time],
-        function(err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve({
-              id: this.lastID,
-              user_id: userId,
-              business_id: businessId,
-              service_id: serviceId,
-              service_name: serviceName,
-              service_price: servicePrice,
-              date,
-              time,
-              status: 'confirmada'
-            });
-          }
-        }
-      );
-    }).catch(() => null);
+    const booking = {
+      id: this.nextBookingId++,
+      user_id: userId,
+      business_id: businessId,
+      service_id: serviceId,
+      service_name: serviceName,
+      service_price: servicePrice,
+      date,
+      time,
+      status: 'confirmada',
+      created_at: new Date().toISOString()
+    };
+    
+    this.bookings.push(booking);
+    return booking;
   }
 
-  /**
-   * Obtener reservas del usuario
-   */
   getUserBookings(userId) {
-    return new Promise((resolve, reject) => {
-      this.db.all(
-        'SELECT * FROM bookings WHERE user_id = ? ORDER BY date DESC',
-        [userId],
-        (err, rows) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(rows || []);
-          }
-        }
-      );
-    }).catch(() => []);
+    return this.bookings.filter(b => b.user_id === userId);
   }
 
-  /**
-   * Cancelar reserva
-   */
   cancelBooking(bookingId, userId) {
-    return new Promise((resolve, reject) => {
-      this.db.run(
-        'DELETE FROM bookings WHERE id = ? AND user_id = ?',
-        [bookingId, userId],
-        function(err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(this.changes > 0);
-          }
-        }
-      );
-    }).catch(() => false);
+    const index = this.bookings.findIndex(b => b.id === bookingId && b.user_id === userId);
+    if (index !== -1) {
+      this.bookings.splice(index, 1);
+      return true;
+    }
+    return false;
   }
 
-  /**
-   * Cerrar conexiÃ³n
-   */
-  close() {
-    this.db.close();
-  }
+  close() {}
 }
 
 module.exports = Database;
