@@ -25,7 +25,10 @@ app.use(express.json());
 app.use(express.static('.')); // Servir archivos estÃ¡ticos
 
 // Inicializar base de datos
-db.init();
+// Inicializar base de datos de forma asíncrona
+(async () => {
+  await db.init();
+})();
 
 // ============ AUTENTICACIÃ“N ============
 
