@@ -835,7 +835,6 @@
             selectedBusiness = allBusinesses.find(b => b.id === businessId);
             if (!selectedBusiness) return;
             
-            // Resetear servicio seleccionado
             selectedService = null;
 
             document.getElementById('modal-business-name').textContent = selectedBusiness.name;
@@ -878,7 +877,6 @@
 
         function closeModal() {
             document.getElementById('business-modal').classList.remove('active');
-            // No reseteamos selectedService aquí para que no se pierda al abrir el modal de reserva
         }
 
         function proceedToBooking() {
@@ -906,9 +904,8 @@
         async function submitBooking(event) {
             event.preventDefault();
             
-            // Verificar que haya un servicio seleccionado ANTES de intentar usarlo
             if (!selectedService) {
-                alert('Error: No has seleccionado ningún servicio. Por favor, vuelve atrás y elige un servicio.');
+                alert('Error: No has seleccionado ningún servicio.');
                 closeBookingModal();
                 return;
             }
@@ -978,9 +975,17 @@
             const token = localStorage.getItem('citea-token');
             const list = document.getElementById('bookings-list');
 
+            if (!token) {
+                list.innerHTML = '<p>Debes iniciar sesión para ver tus reservas</p>';
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_URL}/bookings`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    }
                 });
 
                 if (!response.ok) {
@@ -991,7 +996,7 @@
                 const bookings = data.bookings;
 
                 if (bookings.length === 0) {
-                    list.innerHTML = '<p>No tienes reservas aún</p>';
+                    list.innerHTML = '<div class="empty-state"><p>No tienes reservas aún</p><p>✅ Ve a la página principal y reserva un servicio</p></div>';
                     return;
                 }
 
@@ -999,16 +1004,18 @@
                     <div class="card" style="margin-bottom: 16px;">
                         <div class="card-content">
                             <h3 class="card-title">${booking.service_name}</h3>
-                            <p><strong>Negocio:</strong> ${booking.business_id}</p>
-                            <p><strong>Fecha:</strong> ${booking.date} a las ${booking.time}</p>
-                            <p><strong>Precio:</strong> S/ ${booking.service_price}</p>
-                            <p><strong>Estado:</strong> <span style="color: #10b981; font-weight: 600;">${booking.status}</span></p>
-                            <button class="btn" onclick="cancelBooking('${booking.id}')" style="margin-top: 12px;">Cancelar Reserva</button>
+                            <p><strong>📋 Servicio:</strong> ${booking.service_name}</p>
+                            <p><strong>🏢 Negocio ID:</strong> ${booking.business_id}</p>
+                            <p><strong>📅 Fecha:</strong> ${booking.date} a las ${booking.time}</p>
+                            <p><strong>💰 Precio:</strong> S/ ${booking.service_price}</p>
+                            <p><strong>✅ Estado:</strong> <span style="color: #10b981; font-weight: 600;">${booking.status}</span></p>
+                            <button class="btn btn-cancel" onclick="cancelBooking('${booking.id}')" style="margin-top: 12px;">🗑️ Cancelar Reserva</button>
                         </div>
                     </div>
                 `).join('');
             } catch (error) {
-                list.innerHTML = `<p>Error: ${error.message}</p>`;
+                console.error('Error:', error);
+                list.innerHTML = `<p class="error">Error al cargar reservas: ${error.message}</p>`;
             }
         }
 
@@ -1018,20 +1025,31 @@
             }
 
             const token = localStorage.getItem('citea-token');
+            
+            if (!token) {
+                alert('Debes iniciar sesión nuevamente');
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_URL}/bookings/${bookingId}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    throw new Error('Error al cancelar la reserva');
+                    throw new Error(data.error || 'Error al cancelar la reserva');
                 }
 
-                alert('Reserva cancelada');
+                alert('✅ Reserva cancelada correctamente');
                 renderBookings();
             } catch (error) {
+                console.error('Error:', error);
                 alert('Error: ' + error.message);
             }
         }
