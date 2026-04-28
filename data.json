@@ -1,0 +1,206 @@
+{
+  "businesses": [
+    {
+      "id": "1",
+      "name": "Belleza Peruana",
+      "description": "Salón de belleza especializado en tratamientos faciales y corporales",
+      "image": "https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "category": "belleza",
+      "rating": 4.8,
+      "reviews": 127,
+      "address": "Av. Larco 1234, Miraflores, Lima",
+      "phone": "+51 1 2345678",
+      "email": "info@bellezaperuana.com",
+      "hours": {
+        "open": "09:00",
+        "close": "19:00"
+      },
+      "staff": [
+        {
+          "id": "staff1",
+          "name": "María García",
+          "role": "Esteticista",
+          "specialty": "Faciales"
+        },
+        {
+          "id": "staff2",
+          "name": "Carmen López",
+          "role": "Masajista",
+          "specialty": "Masajes"
+        }
+      ],
+      "services": [
+        {
+          "id": "s1",
+          "name": "Facial Hidratante",
+          "description": "Tratamiento facial completo con productos naturales",
+          "duration": 60,
+          "price": 120,
+          "staff_id": "staff1"
+        },
+        {
+          "id": "s2",
+          "name": "Manicure + Pedicure",
+          "description": "Manicure y pedicure con diseños personalizados",
+          "duration": 90,
+          "price": 150,
+          "staff_id": "staff1"
+        },
+        {
+          "id": "s3",
+          "name": "Masaje Relajante",
+          "description": "Masaje corporal relajante de 60 minutos",
+          "duration": 60,
+          "price": 100,
+          "staff_id": "staff2"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "Barbería Clásica",
+      "description": "Barbería tradicional con servicios de corte y afeitado",
+      "image": "https://images.pexels.com/photos/3962286/pexels-photo-3962286.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "category": "barberia",
+      "rating": 4.9,
+      "reviews": 89,
+      "address": "Jr. Ucayali 567, Centro, Lima",
+      "phone": "+51 1 9876543",
+      "email": "info@barberiaclasica.com",
+      "hours": {
+        "open": "08:00",
+        "close": "18:00"
+      },
+      "staff": [
+        {
+          "id": "staff3",
+          "name": "Juan Rodríguez",
+          "role": "Barbero",
+          "specialty": "Cortes clásicos"
+        },
+        {
+          "id": "staff4",
+          "name": "Carlos Mendoza",
+          "role": "Barbero",
+          "specialty": "Afeitado tradicional"
+        }
+      ],
+      "services": [
+        {
+          "id": "s4",
+          "name": "Corte de Cabello",
+          "description": "Corte de cabello con máquina y tijera",
+          "duration": 30,
+          "price": 50,
+          "staff_id": "staff3"
+        },
+        {
+          "id": "s5",
+          "name": "Afeitado Tradicional",
+          "description": "Afeitado con navaja y productos premium",
+          "duration": 40,
+          "price": 60,
+          "staff_id": "staff4"
+        },
+        {
+          "id": "s6",
+          "name": "Corte + Barba",
+          "description": "Corte de cabello y arreglo de barba",
+          "duration": 50,
+          "price": 80,
+          "staff_id": "staff3"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Spa Wellness",
+      "description": "Centro de spa con tratamientos relajantes y rejuvenecedores",
+      "image": "https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "category": "spa",
+      "rating": 4.7,
+      "reviews": 156,
+      "address": "Av. Paseo de la República 2000, San Isidro, Lima",
+      "phone": "+51 1 5555555",
+      "email": "info@spawellness.com",
+      "hours": {
+        "open": "10:00",
+        "close": "20:00"
+      },
+      "staff": [
+        {
+          "id": "staff5",
+          "name": "Priya Sharma",
+          "role": "Masajista",
+          "specialty": "Masaje tailandés"
+        }
+      ],
+      "services": [
+        {
+          "id": "s7",
+          "name": "Masaje Tailandés",
+          "description": "Masaje tailandés tradicional de 90 minutos",
+          "duration": 90,
+          "price": 200,
+          "staff_id": "staff5"
+        },
+        {
+          "id": "s8",
+          "name": "Paquete Relajación",
+          "description": "Masaje + facial + reflexología (2 horas)",
+          "duration": 120,
+          "price": 350,
+          "staff_id": "staff5"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "Bella In",
+      "description": "Salón de belleza especializado en cejas y pestañas",
+      "image": "https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "category": "estetica",
+      "rating": 4.8,
+      "reviews": 180,
+      "address": "Av. Larco 2, Miraflores, Lima",
+      "phone": "+51 1 2343338",
+      "email": "info@bellain.com",
+      "hours": {
+        "open": "09:00",
+        "close": "19:00"
+      },
+      "staff": [
+        {
+          "id": "staff6",
+          "name": "María Ramos",
+          "role": "Esteticista",
+          "specialty": "Microblading"
+        },
+        {
+          "id": "staff7",
+          "name": "Carmen Juarez",
+          "role": "Esteticista",
+          "specialty": "Volumen Ruso"
+        }
+      ],
+      "services": [
+        {
+          "id": "s9",
+          "name": "Volumen Ruso",
+          "description": "Pestañas, volumen ruso",
+          "duration": 70,
+          "price": 200,
+          "staff_id": "staff7"
+        },
+        {
+          "id": "s10",
+          "name": "Microblading",
+          "description": "Cejas, técnica Microblading",
+          "duration": 80,
+          "price": 190,
+          "staff_id": "staff6"
+       }
+      ]
+    }
+  ]
+    }
