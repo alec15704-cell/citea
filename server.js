@@ -1,12 +1,6 @@
 /**
  * Citea - Backend Node.js
- * Servidor Express sencillo con SQLite
- * 
- * Uso:
- * npm install
- * npm start
- * 
- * El servidor correrá en http://localhost:3000
+ * Versión que funciona en Vercel y Render
  */
 
 const express = require('express');
@@ -14,6 +8,7 @@ const cors = require('cors');
 const Database = require('./database');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const db = new Database();
@@ -22,17 +17,33 @@ const JWT_SECRET = process.env.JWT_SECRET || 'citea-secret-key-2024';
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); // Servir archivos estáticos
+app.use(express.static('.'));
 
 // Inicializar base de datos
 db.init();
 
+// ============ SERVIR data.json ============
+
+// Ruta para obtener los negocios (centros de belleza)
+app.get('/api/businesses', (req, res) => {
+  try {
+    // Leer el archivo data.json
+    const rawData = fs.readFileSync(path.join(__dirname, 'data.json'), 'utf8');
+    const data = JSON.parse(rawData);
+    res.json(data.businesses);
+  } catch (error) {
+    console.error('Error al leer data.json:', error);
+    res.status(500).json({ error: 'Error al cargar los datos' });
+  }
+});
+
+// También servir data.json directamente por si acaso
+app.get('/data.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'data.json'));
+});
+
 // ============ AUTENTICACIÓN ============
 
-/**
- * POST /api/auth/register
- * Registrar nuevo usuario
- */
 app.post('/api/auth/register', (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
@@ -55,14 +66,11 @@ app.post('/api/auth/register', (req, res) => {
       token
     });
   } catch (error) {
+    console.error('Error en registro:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-/**
- * POST /api/auth/login
- * Iniciar sesión
- */
 app.post('/api/auth/login', (req, res) => {
   try {
     const { email, password } = req.body;
@@ -85,14 +93,11 @@ app.post('/api/auth/login', (req, res) => {
       token
     });
   } catch (error) {
+    console.error('Error en login:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-/**
- * POST /api/auth/verify
- * Verificar token
- */
 app.post('/api/auth/verify', (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -103,6 +108,10 @@ app.post('/api/auth/verify', (req, res) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = db.getUserById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no encontrado' });
+    }
 
     res.json({
       success: true,
@@ -115,10 +124,6 @@ app.post('/api/auth/verify', (req, res) => {
 
 // ============ RESERVAS ============
 
-/**
- * POST /api/bookings
- * Crear nueva reserva
- */
 app.post('/api/bookings', (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -149,6 +154,7 @@ app.post('/api/bookings', (req, res) => {
       booking
     });
   } catch (error) {
+    console.error('Error al crear reserva:', error);
     if (error.message === 'invalid token') {
       return res.status(401).json({ error: 'Token inválido' });
     }
@@ -156,10 +162,6 @@ app.post('/api/bookings', (req, res) => {
   }
 });
 
-/**
- * GET /api/bookings
- * Obtener mis reservas
- */
 app.get('/api/bookings', (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -176,14 +178,11 @@ app.get('/api/bookings', (req, res) => {
       bookings
     });
   } catch (error) {
+    console.error('Error al obtener reservas:', error);
     res.status(401).json({ error: 'Token inválido' });
   }
 });
 
-/**
- * DELETE /api/bookings/:id
- * Cancelar reserva
- */
 app.delete('/api/bookings/:id', (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -202,24 +201,15 @@ app.delete('/api/bookings/:id', (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
+    console.error('Error al cancelar reserva:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// ============ DATOS ============
+// ============ RUTA PRINCIPAL ============
 
-/**
- * GET /api/businesses
- * Obtener todos los centros
- */
-app.get('/api/businesses', (req, res) => {
-  try {
-    const fs = require('fs');
-    const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
-    res.json(data.businesses);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ============ SERVIDOR ============
@@ -228,6 +218,6 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`✅ Citea Backend corriendo en http://localhost:${PORT}`);
-  console.log(`📁 Base de datos: citea.db`);
   console.log(`🔐 JWT Secret: ${JWT_SECRET}`);
+  console.log(`📊 Base de datos en memoria iniciada`);
 });
