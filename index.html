@@ -879,19 +879,20 @@
         }
 
         function proceedToBooking() {
-            if (!currentUser) {
-                alert('Debes ingresar para reservar');
-                openAuthModal('login');
-                return;
-            }
+    if (!currentUser) {
+        alert('Debes ingresar para reservar');
+        openAuthModal('login');
+        return;
+    }
 
-            if (!selectedService) {
-                alert('Por favor selecciona un servicio');
-                return;
-            }
-            closeModal();
-            document.getElementById('booking-modal').classList.add('active');
-        }
+    if (!selectedService) {
+        alert('Por favor selecciona un servicio');
+        return;
+    }
+
+    closeModal();
+    document.getElementById('booking-modal').classList.add('active');
+}
 
         function closeBookingModal() {
             document.getElementById('booking-modal').classList.remove('active');
