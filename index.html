@@ -626,7 +626,7 @@
                 <button class="close-btn" onclick="closeBookingModal()">×</button>
             </div>
 
-            <form onsubmit="submitBooking(event)">
+            <form id="booking-form" onsubmit="submitBooking(event)">
                 <div class="form-group">
                     <label>Fecha</label>
                     <input type="date" id="booking-date" required>
@@ -664,7 +664,7 @@
         let selectedBusiness = null;
         let selectedService = null;
         let currentUser = null;
-        let authMode = 'login'; // 'login' o 'register'
+        let authMode = 'login';
 
         // ============ AUTENTICACIÓN ============
 
@@ -834,6 +834,9 @@
         function openBusinessModal(businessId) {
             selectedBusiness = allBusinesses.find(b => b.id === businessId);
             if (!selectedBusiness) return;
+            
+            // Resetear servicio seleccionado
+            selectedService = null;
 
             document.getElementById('modal-business-name').textContent = selectedBusiness.name;
             document.getElementById('modal-business-info').innerHTML = `
@@ -855,49 +858,46 @@
         }
 
         function selectService(serviceId) {
-    console.log("Buscando servicio:", serviceId);
-    selectedService = selectedBusiness.services.find(s => s.id === serviceId);
-    console.log("Servicio encontrado:", selectedService);
-    
-    document.querySelectorAll('.service-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-    
-    if (event && event.target) {
-        const serviceDiv = event.target.closest('.service-item');
-        if (serviceDiv) serviceDiv.classList.add('selected');
-    }
-    
-    if (!selectedService) {
-        alert('Error: No se encontró el servicio');
-    }
-}
+            console.log("Buscando servicio:", serviceId);
+            selectedService = selectedBusiness.services.find(s => s.id === serviceId);
+            console.log("Servicio encontrado:", selectedService);
+            
+            document.querySelectorAll('.service-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            if (event && event.target) {
+                const serviceDiv = event.target.closest('.service-item');
+                if (serviceDiv) serviceDiv.classList.add('selected');
+            }
+            
+            if (!selectedService) {
+                alert('Error: No se encontró el servicio');
+            }
+        }
 
         function closeModal() {
             document.getElementById('business-modal').classList.remove('active');
-            selectedService = null;
+            // No reseteamos selectedService aquí para que no se pierda al abrir el modal de reserva
         }
 
         function proceedToBooking() {
-    //  1. PRUEBA: Ver qué hay en selectedService
-    console.log('selectedService es:', selectedService);
-    
-    if (!currentUser) {
-        alert('Debes ingresar para reservar');
-        openAuthModal('login');
-        return;
-    }
+            console.log('selectedService es:', selectedService);
+            
+            if (!currentUser) {
+                alert('Debes ingresar para reservar');
+                openAuthModal('login');
+                return;
+            }
 
-    if (!selectedService) {
-        //  2. PRUEBA: Mostrar TODOS los servicios disponibles
-        console.log('Servicios disponibles:', selectedBusiness?.services);
-        alert('Por favor haz clic en un servicio para seleccionarlo');
-        return;
-    }
+            if (!selectedService) {
+                alert('Por favor haz clic en un servicio para seleccionarlo');
+                return;
+            }
 
-    closeModal();
-    document.getElementById('booking-modal').classList.add('active');
-}
+            closeModal();
+            document.getElementById('booking-modal').classList.add('active');
+        }
 
         function closeBookingModal() {
             document.getElementById('booking-modal').classList.remove('active');
@@ -906,9 +906,26 @@
         async function submitBooking(event) {
             event.preventDefault();
             
+            // Verificar que haya un servicio seleccionado ANTES de intentar usarlo
+            if (!selectedService) {
+                alert('Error: No has seleccionado ningún servicio. Por favor, vuelve atrás y elige un servicio.');
+                closeBookingModal();
+                return;
+            }
+            
             const token = localStorage.getItem('citea-token');
+            if (!token) {
+                alert('Debes iniciar sesión nuevamente');
+                return;
+            }
+            
             const date = document.getElementById('booking-date').value;
             const time = document.getElementById('booking-time').value;
+            
+            if (!date || !time) {
+                alert('Por favor selecciona fecha y hora');
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_URL}/bookings`, {
@@ -927,8 +944,10 @@
                     })
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    throw new Error('Error al crear la reserva');
+                    throw new Error(data.error || 'Error al crear la reserva');
                 }
 
                 alert('¡Reserva confirmada!');
