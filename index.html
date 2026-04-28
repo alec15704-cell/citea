@@ -855,10 +855,23 @@
         }
 
         function selectService(serviceId) {
-            selectedService = selectedBusiness.services.find(s => s.id === serviceId);
-            document.querySelectorAll('.service-item').forEach(item => item.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-        }
+    console.log("Buscando servicio:", serviceId);
+    selectedService = selectedBusiness.services.find(s => s.id === serviceId);
+    console.log("Servicio encontrado:", selectedService);
+    
+    document.querySelectorAll('.service-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    if (event && event.target) {
+        const serviceDiv = event.target.closest('.service-item');
+        if (serviceDiv) serviceDiv.classList.add('selected');
+    }
+    
+    if (!selectedService) {
+        alert('Error: No se encontró el servicio');
+    }
+}
 
         function closeModal() {
             document.getElementById('business-modal').classList.remove('active');
