@@ -229,8 +229,13 @@ app.get('/api/businesses', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`âœ… Citea Backend corriendo en http://localhost:${PORT}`);
-  console.log(`ðŸ“ Base de datos: citea.db`);
-  console.log(`ðŸ” JWT Secret: ${JWT_SECRET}`);
-});
+// Inicializar base de datos y luego iniciar servidor
+(async () => {
+  await db.init();
+  
+  app.listen(PORT, () => {
+    console.log(`✅ Citea Backend corriendo en http://localhost:${PORT}`);
+    console.log(`🔐 JWT Secret: ${JWT_SECRET}`);
+    console.log(`🗄️ Base de datos PostgreSQL conectada`);
+  });
+})();
