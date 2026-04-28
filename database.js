@@ -1,29 +1,63 @@
 /**
- * Base de datos simplificada que funciona en cualquier plataforma
- * Usa memoria en lugar de archivos
+ * Citea - Database Manager
+ * Gestiona SQLite para usuarios y reservas
  */
+
+const sqlite3 = require('sqlite3').verbose();
+const crypto = require('crypto');
+const path = require('path');
 
 class Database {
   constructor() {
-    // Estos arrays guardan los datos en memoria
-    this.users = [];
-    this.bookings = [];
-    this.nextUserId = 1;
-    this.nextBookingId = 1;
+    this.db = new sqlite3.Database('citea.db', (err) => {
+      if (err) {
+        console.error('Error al abrir base de datos:', err);
+      } else {
+        console.log('âœ… Base de datos conectada');
+      }
+    });
   }
 
   /**
-   * Inicializar (ya no necesita crear tablas)
+   * Inicializar tablas
    */
   init() {
-    console.log('✅ Base de datos en memoria inicializada');
+    // Tabla de usuarios
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        phone TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Tabla de reservas
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS bookings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        business_id TEXT NOT NULL,
+        service_id TEXT NOT NULL,
+        service_name TEXT NOT NULL,
+        service_price REAL NOT NULL,
+        date TEXT NOT NULL,
+        time TEXT NOT NULL,
+        status TEXT DEFAULT 'confirmada',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `);
+
+    console.log('âœ… Tablas inicializadas');
   }
 
   /**
-   * Hash simple de contraseña
+   * Hash de contraseÃ±a
    */
   hashPassword(password) {
-    const crypto = require('crypto');
     return crypto.createHash('sha256').update(password).digest('hex');
   }
 
@@ -31,112 +65,142 @@ class Database {
    * Registrar usuario
    */
   registerUser(name, email, password, phone = '') {
-    // Verificar si el email ya existe
-    const existingUser = this.users.find(u => u.email === email);
-    if (existingUser) {
-      return null;
-    }
+    return new Promise((resolve, reject) => {
+      const hashedPassword = this.hashPassword(password);
 
-    const hashedPassword = this.hashPassword(password);
-    const newUser = {
-      id: this.nextUserId++,
-      name,
-      email,
-      password: hashedPassword,
-      phone,
-      created_at: new Date().toISOString()
-    };
-    
-    this.users.push(newUser);
-    
-    return {
-      id: newUser.id,
-      name: newUser.name,
-      email: newUser.email,
-      phone: newUser.phone
-    };
+      this.db.run(
+        'INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)',
+        [name, email, hashedPassword, phone],
+        function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({
+              id: this.lastID,
+              name,
+              email,
+              phone
+            });
+          }
+        }
+      );
+    }).catch(() => null);
   }
 
   /**
    * Login de usuario
    */
   loginUser(email, password) {
-    const hashedPassword = this.hashPassword(password);
-    const user = this.users.find(u => u.email === email && u.password === hashedPassword);
-    
-    if (!user) {
-      return null;
-    }
-    
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone
-    };
+    return new Promise((resolve, reject) => {
+      const hashedPassword = this.hashPassword(password);
+
+      this.db.get(
+        'SELECT * FROM users WHERE email = ? AND password = ?',
+        [email, hashedPassword],
+        (err, row) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row || null);
+          }
+        }
+      );
+    }).catch(() => null);
   }
 
   /**
    * Obtener usuario por ID
    */
   getUserById(id) {
-    const user = this.users.find(u => u.id === parseInt(id));
-    if (!user) return null;
-    
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone
-    };
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT id, name, email, phone FROM users WHERE id = ?',
+        [id],
+        (err, row) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row);
+          }
+        }
+      );
+    }).catch(() => null);
   }
 
   /**
    * Crear reserva
    */
   createBooking(userId, businessId, serviceId, serviceName, servicePrice, date, time) {
-    const newBooking = {
-      id: this.nextBookingId++,
-      user_id: parseInt(userId),
-      business_id: businessId,
-      service_id: serviceId,
-      service_name: serviceName,
-      service_price: servicePrice,
-      date,
-      time,
-      status: 'confirmada',
-      created_at: new Date().toISOString()
-    };
-    
-    this.bookings.push(newBooking);
-    
-    return newBooking;
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        `INSERT INTO bookings 
+         (user_id, business_id, service_id, service_name, service_price, date, time) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [userId, businessId, serviceId, serviceName, servicePrice, date, time],
+        function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({
+              id: this.lastID,
+              user_id: userId,
+              business_id: businessId,
+              service_id: serviceId,
+              service_name: serviceName,
+              service_price: servicePrice,
+              date,
+              time,
+              status: 'confirmada'
+            });
+          }
+        }
+      );
+    }).catch(() => null);
   }
 
   /**
    * Obtener reservas del usuario
    */
   getUserBookings(userId) {
-    return this.bookings.filter(b => b.user_id === parseInt(userId));
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        'SELECT * FROM bookings WHERE user_id = ? ORDER BY date DESC',
+        [userId],
+        (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows || []);
+          }
+        }
+      );
+    }).catch(() => []);
   }
 
   /**
    * Cancelar reserva
    */
   cancelBooking(bookingId, userId) {
-    const index = this.bookings.findIndex(b => b.id === parseInt(bookingId) && b.user_id === parseInt(userId));
-    if (index !== -1) {
-      this.bookings.splice(index, 1);
-      return true;
-    }
-    return false;
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'DELETE FROM bookings WHERE id = ? AND user_id = ?',
+        [bookingId, userId],
+        function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.changes > 0);
+          }
+        }
+      );
+    }).catch(() => false);
   }
 
   /**
-   * Cerrar conexión (no necesario para memoria)
+   * Cerrar conexiÃ³n
    */
   close() {
-    console.log('Base de datos cerrada');
+    this.db.close();
   }
 }
 
