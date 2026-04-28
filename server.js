@@ -6,7 +6,7 @@
  * npm install
  * npm start
  * 
- * El servidor correrá en http://localhost:3000
+ * El servidor correrÃ¡ en http://localhost:3000
  */
 
 const express = require('express');
@@ -22,12 +22,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'citea-secret-key-2024';
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); // Servir archivos estáticos
+app.use(express.static('.')); // Servir archivos estÃ¡ticos
 
 // Inicializar base de datos
 db.init();
 
-// ============ AUTENTICACIÓN ============
+// ============ AUTENTICACIÃ“N ============
 
 /**
  * POST /api/auth/register
@@ -44,7 +44,7 @@ app.post('/api/auth/register', (req, res) => {
     const user = db.registerUser(name, email, password, phone);
     
     if (!user) {
-      return res.status(400).json({ error: 'El email ya está registrado' });
+      return res.status(400).json({ error: 'El email ya estÃ¡ registrado' });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
@@ -61,20 +61,20 @@ app.post('/api/auth/register', (req, res) => {
 
 /**
  * POST /api/auth/login
- * Iniciar sesión
+ * Iniciar sesiÃ³n
  */
 app.post('/api/auth/login', (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email y contraseña requeridos' });
+      return res.status(400).json({ error: 'Email y contraseÃ±a requeridos' });
     }
 
     const user = db.loginUser(email, password);
 
     if (!user) {
-      return res.status(401).json({ error: 'Email o contraseña incorrectos' });
+      return res.status(401).json({ error: 'Email o contraseÃ±a incorrectos' });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
@@ -109,7 +109,7 @@ app.post('/api/auth/verify', (req, res) => {
       user: { id: user.id, name: user.name, email: user.email }
     });
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido' });
+    res.status(401).json({ error: 'Token invÃ¡lido' });
   }
 });
 
@@ -150,7 +150,7 @@ app.post('/api/bookings', (req, res) => {
     });
   } catch (error) {
     if (error.message === 'invalid token') {
-      return res.status(401).json({ error: 'Token inválido' });
+      return res.status(401).json({ error: 'Token invÃ¡lido' });
     }
     res.status(500).json({ error: error.message });
   }
@@ -176,7 +176,7 @@ app.get('/api/bookings', (req, res) => {
       bookings
     });
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido' });
+    res.status(401).json({ error: 'Token invÃ¡lido' });
   }
 });
 
@@ -227,7 +227,7 @@ app.get('/api/businesses', (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`✅ Citea Backend corriendo en http://localhost:${PORT}`);
-  console.log(`📁 Base de datos: citea.db`);
-  console.log(`🔐 JWT Secret: ${JWT_SECRET}`);
+  console.log(`âœ… Citea Backend corriendo en http://localhost:${PORT}`);
+  console.log(`ðŸ“ Base de datos: citea.db`);
+  console.log(`ðŸ” JWT Secret: ${JWT_SECRET}`);
 });
